@@ -41,7 +41,10 @@ public class GlobalExceptionHandler {
         return pd;
     }
 
-    @ExceptionHandler(org.springframework.dao.DataAccessResourceFailureException.class)
+    @ExceptionHandler({
+            org.springframework.dao.DataAccessResourceFailureException.class,
+            org.springframework.transaction.CannotCreateTransactionException.class,
+            io.github.resilience4j.circuitbreaker.CallNotPermittedException.class})
     ProblemDetail handleDataStoreDown(Exception ex) {
         log.error("Data store unavailable", ex);
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.SERVICE_UNAVAILABLE,
