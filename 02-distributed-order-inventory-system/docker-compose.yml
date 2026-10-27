@@ -1,0 +1,111 @@
+name: order-inventory
+
+x-backend-env: &backend-env
+  DB_URL: jdbc:postgresql://postgres:5432/orders
+  DB_USER: orders
+  DB_PASSWORD: ${POSTGRES_PASSWORD:-orders}
+  REDIS_HOST: redis
+  RABBIT_HOST: rabbitmq
+  RABBIT_USER: orders
+  RABBIT_PASSWORD: ${RABBIT_PASSWORD:-orders}
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: orders
+      POSTGRES_USER: orders
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-orders}
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U orders -d orders"]
+      interval: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    # AOF so live stock and idempotency keys survive a restart
+    command: ["redis-server", "--appendonly", "yes", "--appendfsync", "everysec"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: orders
+      RABBITMQ_DEFAULT_PASS: ${RABBIT_PASSWORD:-orders}
+    ports:
+      - "15672:15672"   # management UI
+    volumes:
+      - rabbit-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      retries: 10
+
+  order-service:
+    build:
+      context: .
+      args:
+        MODULE: order-service
+    environment:
+      <<: *backend-env
+      JWT_SECRET: ${JWT_SECRET:-local-dev-secret-change-me-0123456789abcdef}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin12345}
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8081/actuator/health/readiness | grep -q UP"]
+      interval: 10s
+      start_period: 40s
+      retries: 10
+
+  order-worker:
+    build:
+      context: .
+      args:
+        MODULE: order-worker
+    environment:
+      <<: *backend-env
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8082/actuator/health/readiness | grep -q UP"]
+      interval: 10s
+      start_period: 40s
+      retries: 10
+
+  api-gateway:
+    build:
+      context: .
+      args:
+        MODULE: api-gateway
+    environment:
+      REDIS_HOST: redis
+      ORDER_SERVICE_URL: http://order-service:8081
+      ORDER_SERVICE_WS_URL: ws://order-service:8081
+      API_RATE_PER_SEC: ${API_RATE_PER_SEC:-200}
+      API_BURST: ${API_BURST:-400}
+    ports:
+      - "8080:8080"
+    depends_on:
+      order-service: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health | grep -q UP"]
+      interval: 5s
+      start_period: 30s
+      retries: 10
+
+volumes:
+  pg-data:
+  redis-data:
+  rabbit-data:

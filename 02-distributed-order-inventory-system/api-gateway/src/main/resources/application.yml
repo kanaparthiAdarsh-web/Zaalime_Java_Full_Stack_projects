@@ -1,0 +1,58 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: api-gateway
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  cloud:
+    gateway:
+      server:
+        webflux:
+          default-filters:
+            - AddResponseHeader=X-Content-Type-Options, nosniff
+          routes:
+            # auth endpoints get a much tighter limit (password guessing)
+            - id: auth
+              uri: ${ORDER_SERVICE_URL:http://localhost:8081}
+              predicates:
+                - Path=/api/auth/**
+              filters:
+                - name: RequestRateLimiter
+                  args:
+                    key-resolver: "#{@callerKeyResolver}"
+                    redis-rate-limiter.replenishRate: ${AUTH_RATE_PER_SEC:20}
+                    redis-rate-limiter.burstCapacity: ${AUTH_BURST:40}
+
+            - id: api
+              uri: ${ORDER_SERVICE_URL:http://localhost:8081}
+              predicates:
+                - Path=/api/**
+              filters:
+                - name: RequestRateLimiter
+                  args:
+                    key-resolver: "#{@callerKeyResolver}"
+                    redis-rate-limiter.replenishRate: ${API_RATE_PER_SEC:200}
+                    redis-rate-limiter.burstCapacity: ${API_BURST:400}
+
+            - id: websocket
+              uri: ${ORDER_SERVICE_WS_URL:ws://localhost:8081}
+              predicates:
+                - Path=/ws/**
+
+            - id: dashboard
+              uri: ${ORDER_SERVICE_URL:http://localhost:8081}
+              predicates:
+                - Path=/, /index.html, /app.js, /styles.css, /favicon.svg
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
+  endpoint:
+    gateway:
+      access: read-only
