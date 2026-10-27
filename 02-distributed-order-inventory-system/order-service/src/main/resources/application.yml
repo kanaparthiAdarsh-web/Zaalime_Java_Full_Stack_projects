@@ -1,0 +1,88 @@
+server:
+  port: ${SERVER_PORT:8081}
+  shutdown: graceful
+
+spring:
+  application:
+    name: order-service
+  threads:
+    virtual:
+      enabled: true   # request threads are mostly waiting on Redis / RabbitMQ
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/orders}
+    username: ${DB_USER:orders}
+    password: ${DB_PASSWORD:orders}
+    hikari:
+      maximum-pool-size: 20
+      connection-timeout: 3000   # fail fast so the circuit breaker can react
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: 2s
+  rabbitmq:
+    host: ${RABBIT_HOST:localhost}
+    port: ${RABBIT_PORT:5672}
+    username: ${RABBIT_USER:guest}
+    password: ${RABBIT_PASSWORD:guest}
+    publisher-confirm-type: simple
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:change-me-in-production-this-is-only-a-dev-secret}
+    ttl: 8h
+    issuer: order-service
+  admin:
+    username: ${ADMIN_USERNAME:admin}
+    password: ${ADMIN_PASSWORD:admin12345}
+  allowed-origins: ${ALLOWED_ORIGINS:*}
+  checkout:
+    idempotency-ttl: 24h
+    pending-order-ttl: 1h
+    max-lines: 20
+    max-quantity: 10
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 20
+        minimum-number-of-calls: 10
+        failure-rate-threshold: 50
+        slow-call-duration-threshold: 3s
+        slow-call-rate-threshold: 80
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+        register-health-indicator: false
+    instances:
+      catalogDb:
+        base-config: default
+      broker:
+        base-config: default
+        ignore-exceptions:
+          - com.zaalime.orders.service.web.ApiException
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,circuitbreakers
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: when-authorized
+
+logging:
+  level:
+    com.zaalime: INFO
