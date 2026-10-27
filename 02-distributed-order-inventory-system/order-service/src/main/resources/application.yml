@@ -1,13 +1,20 @@
 server:
   port: ${SERVER_PORT:8081}
   shutdown: graceful
+  tomcat:
+    threads:
+      max: ${TOMCAT_MAX_THREADS:100}
+    accept-count: 1000
 
 spring:
   application:
     name: order-service
+  # Virtual threads stay off on purpose: on Java 21 the RabbitMQ client pins them
+  # (synchronized blocks) and under ~1000 concurrent checkouts every carrier thread
+  # got pinned and the service deadlocked. A sized platform pool is predictable.
   threads:
     virtual:
-      enabled: true   # request threads are mostly waiting on Redis / RabbitMQ
+      enabled: false
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/orders}
     username: ${DB_USER:orders}
@@ -31,7 +38,15 @@ spring:
     port: ${RABBIT_PORT:5672}
     username: ${RABBIT_USER:guest}
     password: ${RABBIT_PASSWORD:guest}
-    publisher-confirm-type: simple
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    template:
+      mandatory: true   # unroutable messages come back instead of vanishing
+    cache:
+      channel:
+        # one cached channel per request thread, so a checkout never pays for
+        # opening a new channel (channel.open + confirm.select round trips)
+        size: ${RABBIT_CHANNEL_CACHE:100}
   lifecycle:
     timeout-per-shutdown-phase: 20s
 

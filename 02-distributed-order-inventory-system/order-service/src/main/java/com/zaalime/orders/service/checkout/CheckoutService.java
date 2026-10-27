@@ -143,6 +143,11 @@ public class CheckoutService {
         try {
             pendingOrders.save(event);
             queue.publish(event);
+        } catch (OrderQueuePublisher.ConfirmTimeoutException e) {
+            // The message left this service but the broker never answered. Undoing the
+            // reservation now could double-sell if the message did land, so we keep it and
+            // treat the order as accepted; the worker is the one that finally decides.
+            log.warn("{} - keeping the reservation", e.getMessage());
         } catch (RuntimeException e) {
             // never leave stock reserved for an order nobody will process
             log.error("Could not enqueue order {}, releasing reservation", orderId, e);

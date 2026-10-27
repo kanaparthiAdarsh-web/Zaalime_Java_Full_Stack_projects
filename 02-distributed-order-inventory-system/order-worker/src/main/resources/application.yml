@@ -10,7 +10,7 @@ spring:
     username: ${DB_USER:orders}
     password: ${DB_PASSWORD:orders}
     hikari:
-      maximum-pool-size: 10
+      maximum-pool-size: 16
       connection-timeout: 3000
   flyway:
     enabled: true   # both services may run it; Flyway takes a lock, first one wins
@@ -26,8 +26,8 @@ spring:
     password: ${RABBIT_PASSWORD:guest}
     listener:
       simple:
-        concurrency: ${WORKER_CONCURRENCY:4}
-        max-concurrency: ${WORKER_MAX_CONCURRENCY:8}
+        concurrency: ${WORKER_CONCURRENCY:8}
+        max-concurrency: ${WORKER_MAX_CONCURRENCY:16}
         prefetch: 20
         acknowledge-mode: auto
         default-requeue-rejected: false   # once retries are exhausted -> dead letter queue
