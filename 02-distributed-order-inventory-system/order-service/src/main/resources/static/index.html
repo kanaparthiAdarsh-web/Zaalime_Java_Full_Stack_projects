@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Flash Sale Dashboard</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="topbar">
+    <div class="brand">
+        <span class="logo">◆</span>
+        <div>
+            <h1>Flash Sale Dashboard</h1>
+            <p class="subtitle">Live orders &amp; inventory</p>
+        </div>
+    </div>
+    <div class="topbar-right">
+        <span id="ws-status" class="pill pill-off">● offline</span>
+        <div id="user-box" class="user-box hidden">
+            <span id="user-name"></span>
+            <span id="user-role" class="pill"></span>
+            <button id="logout-btn" class="btn btn-ghost">Log out</button>
+        </div>
+    </div>
+</header>
+
+<main class="layout">
+    <section class="stats">
+        <div class="stat"><span class="stat-label">Queued</span><span id="stat-pending" class="stat-value">0</span></div>
+        <div class="stat"><span class="stat-label">Completed</span><span id="stat-completed" class="stat-value ok">0</span></div>
+        <div class="stat"><span class="stat-label">Failed</span><span id="stat-failed" class="stat-value bad">0</span></div>
+        <div class="stat"><span class="stat-label">Events / sec</span><span id="stat-rate" class="stat-value">0</span></div>
+    </section>
+
+    <section id="auth-panel" class="card auth">
+        <h2>Sign in to shop</h2>
+        <form id="auth-form" autocomplete="on">
+            <input id="auth-username" name="username" placeholder="Username" required minlength="3" maxlength="50">
+            <input id="auth-password" name="password" type="password" placeholder="Password (min 8 chars)" required minlength="8">
+            <div class="row">
+                <button type="submit" class="btn" data-mode="login">Log in</button>
+                <button type="submit" class="btn btn-ghost" data-mode="register">Create account</button>
+            </div>
+            <p id="auth-error" class="error"></p>
+        </form>
+    </section>
+
+    <section class="card products-card">
+        <div class="card-head">
+            <h2>Products</h2>
+            <button id="refresh-products" class="btn btn-ghost btn-small">Refresh</button>
+        </div>
+        <div id="products" class="products"></div>
+    </section>
+
+    <aside class="side">
+        <section class="card">
+            <div class="card-head">
+                <h2>Cart</h2>
+                <span id="cart-total" class="muted"></span>
+            </div>
+            <div id="cart" class="cart"><p class="muted">Sign in to use the cart.</p></div>
+            <button id="checkout-btn" class="btn btn-wide" disabled>Checkout</button>
+            <p id="checkout-msg" class="msg"></p>
+        </section>
+
+        <section id="admin-panel" class="card hidden">
+            <h2>Admin</h2>
+            <form id="create-form" class="stack">
+                <input name="sku" placeholder="SKU (e.g. GPU-001)" required pattern="[A-Za-z0-9_-]+">
+                <input name="name" placeholder="Name" required>
+                <div class="row">
+                    <input name="price" type="number" step="0.01" min="0.01" placeholder="Price" required>
+                    <input name="initialStock" type="number" min="0" placeholder="Stock" required>
+                </div>
+                <button class="btn btn-small" type="submit">Add product</button>
+            </form>
+            <p id="admin-msg" class="msg"></p>
+        </section>
+    </aside>
+
+    <section class="card orders-card">
+        <div class="card-head">
+            <h2>My orders</h2>
+            <button id="refresh-orders" class="btn btn-ghost btn-small">Refresh</button>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Order</th><th>Items</th><th>Total</th><th>Status</th><th>Placed</th></tr></thead>
+                <tbody id="orders"><tr><td colspan="5" class="muted">No orders yet.</td></tr></tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="card log-card">
+        <div class="card-head">
+            <h2>Live activity</h2>
+            <button id="clear-log" class="btn btn-ghost btn-small">Clear</button>
+        </div>
+        <div class="table-wrap log-wrap">
+            <table>
+                <thead><tr><th>Time</th><th>Event</th><th>Subject</th><th>Detail</th></tr></thead>
+                <tbody id="log"></tbody>
+            </table>
+        </div>
+    </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7.0.0/bundles/stomp.umd.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
