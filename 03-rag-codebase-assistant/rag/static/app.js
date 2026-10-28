@@ -98,10 +98,10 @@
             return d;
         }));
 
-        container.replaceChildren(answer,
+        container.replaceChildren(...[answer,
             res.warning ? el('div', { class: 'warning' }, res.warning) : null,
             meta,
-            res.sources.length ? sources : null);
+            res.sources.length ? sources : null].filter(Boolean));
 
         // clicking [n] opens and highlights that source
         container.querySelectorAll('.answer .cite').forEach((btn) => btn.addEventListener('click', () => {

@@ -27,7 +27,7 @@ def test_user_message_wraps_sources_with_locations():
 
 def test_extractive_answer_cites_every_source():
     text = ExtractiveGenerator().generate("q", [_source(), _source("b/Bar.java", "class Bar {}")])
-    assert "[1]" in text and "[2]" in text and "b/Bar.java" in text
+    assert "[1]" in text and "[2]" in text and "`Bar.java:10-12`" in text
 
 
 class _FakeMessages:
@@ -71,3 +71,9 @@ def test_claude_refusal_raises():
 def test_claude_truncated_answer_is_marked():
     gen, _ = _claude_with(SimpleNamespace(stop_reason="max_tokens", content=[SimpleNamespace(type="text", text="Partial")]))
     assert gen.generate("q", [_source()]).endswith("_(answer truncated)_")
+
+
+def test_extractive_answer_shows_the_most_relevant_line():
+    text = "/**\n * Docs.\n */\nprivate Response reserveAndEnqueue(User u) {\n    return null;\n}"
+    answer = ExtractiveGenerator().generate("where is reserveAndEnqueue defined?", [_source(text=text)])
+    assert "`Foo.java:10-12`: private Response reserveAndEnqueue(User u) {" in answer

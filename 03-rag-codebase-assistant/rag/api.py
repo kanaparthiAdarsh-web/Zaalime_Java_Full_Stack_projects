@@ -27,11 +27,11 @@ def create_app(service: RagService | None = None, settings: Settings | None = No
         app.state.rag = service or RagService(settings)
         if settings.ingest_on_start:
             def initial_ingest():
-                try:
-                    log.info("Initial ingest of '%s': %s", settings.ingest_on_start,
-                             app.state.rag.ingest(settings.ingest_on_start).model_dump())
-                except Exception:
-                    log.exception("Initial ingest failed")
+                for path in (p.strip() for p in settings.ingest_on_start.split(",") if p.strip()):
+                    try:
+                        log.info("Initial ingest of '%s': %s", path, app.state.rag.ingest(path).model_dump())
+                    except Exception:
+                        log.exception("Initial ingest of '%s' failed", path)
             threading.Thread(target=initial_ingest, name="initial-ingest", daemon=True).start()
         yield
 

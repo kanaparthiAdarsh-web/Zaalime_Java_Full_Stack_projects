@@ -7,7 +7,8 @@ services:
       - "8000:8000"
     environment:
       INGEST_ROOT: /repo
-      INGEST_ON_START: ${INGEST_ON_START:-.}
+      # the internship projects; add 03-rag-codebase-assistant to index this project too
+      INGEST_ON_START: ${INGEST_ON_START:-01-HFT-matching-engine,02-distributed-order-inventory-system}
       REDIS_URL: redis://redis:6379/0
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       CLAUDE_MODEL: ${CLAUDE_MODEL:-claude-opus-5-5}

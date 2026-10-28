@@ -7,6 +7,7 @@ from typing import Protocol
 import anthropic
 import httpx
 
+from .keyword import tokenize
 from .models import ScoredChunk
 
 log = logging.getLogger(__name__)
@@ -116,11 +117,30 @@ class ExtractiveGenerator:
     name = "extractive"
 
     def generate(self, question: str, sources: list[ScoredChunk]) -> str:
+        terms = set(tokenize(question))
         lines = ["No language model is configured, so here are the most relevant passages:", ""]
         for i, s in enumerate(sources, start=1):
-            first = next((l.strip() for l in s.chunk.text.splitlines() if l.strip()), "")
-            lines.append(f"- `{s.chunk.location}`: {first[:160]} [{i}]")
+            c = s.chunk
+            short = c.path.rsplit("/", 1)[-1]
+            where = f"{short} p.{c.start_line}" if c.language == "pdf" else f"{short}:{c.start_line}-{c.end_line}"
+            lines.append(f"- `{where}`: {_best_line(c.text, terms)[:160]} [{i}]")
         return "\n".join(lines)
+
+
+_COMMENT_ONLY = re.compile(r"^(/\*+|\*+/?|//+|#+|<!--|-->|[{}()\[\];,]*)$")
+
+
+def _best_line(text: str, terms: set[str]) -> str:
+    """The line sharing the most words with the question; skips bare comment markers and braces."""
+    best, best_score = "", -1
+    for raw in text.splitlines():
+        line = raw.strip()
+        if not line or _COMMENT_ONLY.match(line):
+            continue
+        score = len(terms & set(tokenize(line)))
+        if score > best_score:
+            best, best_score = line.lstrip("*/# ").strip(), score
+    return best
 
 
 _CITATION = re.compile(r"\[(\d{1,2})\]")
