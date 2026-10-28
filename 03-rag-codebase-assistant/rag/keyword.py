@@ -44,6 +44,32 @@ def has_code_identifier(query: str) -> bool:
     return bool(_IDENTIFIER.search(query))
 
 
+def code_identifiers(query: str) -> list[str]:
+    return [m.rstrip("()") for m in _IDENTIFIER.findall(query)]
+
+
+_NOT_A_DECLARATION = ("return", "new", "throw", "await", "yield", "if", "while", "else", "case")
+
+
+def defines(text: str, identifier: str) -> bool:
+    """Rough check that a chunk declares `identifier` rather than just mentioning it.
+
+    Catches `def x(`, `class X`, `function x(`, `interface X`, and Java/TS style
+    `public Foo x(` method declarations; skips calls such as `return x(...)` or `y = x(...)`.
+    """
+    ident = re.escape(identifier)
+    keyword_decl = re.compile(rf"\b(?:def|class|interface|enum|record|function|struct|type)\s+{ident}\b")
+    if keyword_decl.search(text):
+        return True
+    method_decl = re.compile(rf"^\s*((?:[\w@<>\[\],.?]+\s+)+){ident}\s*\(", re.M)
+    for m in method_decl.finditer(text):
+        first_word = m.group(1).split()[0]
+        line = text[m.start():text.find("\n", m.start()) if "\n" in text[m.start():] else len(text)]
+        if first_word not in _NOT_A_DECLARATION and "=" not in line.split(identifier)[0]:
+            return True
+    return False
+
+
 class KeywordIndex:
 
     def __init__(self) -> None:

@@ -40,3 +40,16 @@ def test_project_filter(service):
 def test_keyword_only_and_vector_only_modes(service):
     assert service.retriever.search("TokenBucket", 2, mode="keyword")[0].chunk.path == "tools/rate_limiter.py"
     assert service.retriever.search("docker compose dashboard", 2, mode="vector")[0].chunk.path == "shop/README.md"
+
+
+def test_definition_beats_mentions(settings, repo):
+    from rag.embeddings import HashingEmbedder
+    from rag.service import RagService
+
+    # three files that only talk about placeOrder, one that defines it
+    for i in range(3):
+        (repo / "tools" / f"notes_{i}.md").write_text(
+            f"# Notes {i}\n\nplaceOrder is called from the controller. placeOrder placeOrder placeOrder.\n")
+    svc = RagService(settings, embedder=HashingEmbedder())
+    svc.ingest(".")
+    assert svc.retriever.search("where is placeOrder defined?", 4)[0].chunk.path == "shop/src/OrderService.java"

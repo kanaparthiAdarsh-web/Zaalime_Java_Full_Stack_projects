@@ -40,8 +40,8 @@ class RagService:
 
     def __init__(self, settings: Settings, embedder: Embedder | None = None, generator: Generator | None = None):
         self.settings = settings
-        self.embedder = embedder or FastEmbedEmbedder(settings.embedding_model,
-                                                      cache_dir=str(settings.data_dir / "models"))
+        self.embedder = embedder or FastEmbedEmbedder(
+            settings.embedding_model, cache_dir=str(settings.model_cache_dir or settings.data_dir / "models"))
         self.store = VectorStore(settings.data_dir, self.embedder.name)
         self.keywords = KeywordIndex()
         self.keywords.rebuild(self.store.all_chunks())

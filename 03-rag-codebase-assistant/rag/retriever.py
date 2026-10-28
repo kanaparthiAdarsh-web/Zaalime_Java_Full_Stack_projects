@@ -1,7 +1,7 @@
 """Hybrid retrieval: semantic (vectors) + lexical (BM25), merged with Reciprocal Rank Fusion."""
 
 from .embeddings import Embedder
-from .keyword import KeywordIndex, has_code_identifier
+from .keyword import KeywordIndex, code_identifiers, defines
 from .models import Chunk, ScoredChunk, SearchMode
 from .store import VectorStore
 
@@ -12,6 +12,8 @@ RRF_K = 60  # standard constant from the RRF paper; dampens the weight of the ve
 # the most precise signal there is.
 KEYWORD_WEIGHT_PROSE = 0.5
 KEYWORD_WEIGHT_IDENTIFIER = 1.5
+# a chunk that declares the identifier the user asked about beats chunks that only mention it
+DEFINITION_BONUS = 2.0 / (RRF_K + 1)  # as if ranked first by both retrievers
 
 
 def reciprocal_rank_fusion(rankings: list[list[Chunk]], weights: list[float] | None = None,
@@ -51,10 +53,15 @@ class HybridRetriever:
         if mode in ("hybrid", "keyword"):
             keyword_hits = [c for c, _ in self._keywords.search(query, self._pool, languages, project)]
 
-        keyword_weight = KEYWORD_WEIGHT_IDENTIFIER if has_code_identifier(query) else KEYWORD_WEIGHT_PROSE
+        identifiers = code_identifiers(query)
+        keyword_weight = KEYWORD_WEIGHT_IDENTIFIER if identifiers else KEYWORD_WEIGHT_PROSE
         fused = reciprocal_rank_fusion([vector_hits, keyword_hits], [1.0, keyword_weight])
-        results = [ScoredChunk(chunk=c, score=round(s, 5), vector_rank=r[0], keyword_rank=r[1])
-                   for c, s, r in fused]
+        results = []
+        for chunk, score, ranks in fused:
+            if identifiers and any(defines(chunk.text, ident) for ident in identifiers):
+                score += DEFINITION_BONUS
+            results.append(ScoredChunk(chunk=chunk, score=round(score, 5), vector_rank=ranks[0], keyword_rank=ranks[1]))
+        results.sort(key=lambda r: r.score, reverse=True)
         return _dedupe_overlaps(results)[:top_k]
 
 

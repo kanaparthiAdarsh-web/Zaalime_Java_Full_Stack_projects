@@ -1,0 +1,32 @@
+name: rag-assistant
+
+services:
+  rag:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      INGEST_ROOT: /repo
+      INGEST_ON_START: ${INGEST_ON_START:-.}
+      REDIS_URL: redis://redis:6379/0
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      CLAUDE_MODEL: ${CLAUDE_MODEL:-claude-opus-5-5}
+      OLLAMA_URL: ${OLLAMA_URL:-}
+      ADMIN_TOKEN: ${ADMIN_TOKEN:-change-me}
+      RATE_LIMIT_PER_MINUTE: ${RATE_LIMIT_PER_MINUTE:-30}
+    volumes:
+      - ${REPO_PATH:-..}:/repo:ro      # what gets indexed (read-only)
+      - rag-data:/app/data              # vector index survives restarts
+    depends_on:
+      redis: { condition: service_healthy }
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--maxmemory", "128mb", "--maxmemory-policy", "allkeys-lru"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 10
+
+volumes:
+  rag-data:

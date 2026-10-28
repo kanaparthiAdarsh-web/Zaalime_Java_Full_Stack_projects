@@ -14,6 +14,10 @@ class Settings(BaseSettings):
     ingest_root: Path = Path("..")
 
     embedding_model: str = "BAAI/bge-small-en-v1.5"
+    model_cache_dir: Path | None = None   # defaults to <data_dir>/models
+
+    # e.g. "." to index everything under INGEST_ROOT when the server starts (runs in the background)
+    ingest_on_start: str | None = None
 
     chunk_size: int = 1500          # characters
     chunk_overlap: int = 200

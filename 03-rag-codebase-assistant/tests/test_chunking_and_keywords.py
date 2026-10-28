@@ -43,3 +43,16 @@ def test_code_identifier_detection():
     assert has_code_identifier("explain OrderEventHandler")
     assert has_code_identifier("who calls start()")
     assert not has_code_identifier("How does checkout prevent overselling?")
+
+
+def test_definition_detection():
+    from rag.keyword import code_identifiers, defines
+
+    assert code_identifiers("where is reserveAndEnqueue defined, and who calls start()?") == ["reserveAndEnqueue", "start"]
+    assert defines("    private CheckoutResponse reserveAndEnqueue(AuthUser user) {", "reserveAndEnqueue")
+    assert defines("public static <T> List<T> parseAll(String s) {", "parseAll")
+    assert defines("def place_order(self, item):", "place_order")
+    assert defines("class OrderService {", "OrderService")
+    assert not defines("        return reserveAndEnqueue(user, key);", "reserveAndEnqueue")
+    assert not defines("        CheckoutResponse r = reserveAndEnqueue(user);", "reserveAndEnqueue")
+    assert not defines('<button>Where is reserveAndEnqueue defined?</button>', "reserveAndEnqueue")
