@@ -1,7 +1,7 @@
-.venv/
-__pycache__/
-*.pyc
-.pytest_cache/
+target/
+*.class
+*.log
+.idea/
+*.iml
+.vscode/
 data/
-.env
-*.egg-info/

@@ -20,3 +20,11 @@
 {"q": "How does the TCP order server parse incoming orders?", "expect": ["OrderServer.java"], "kind": "concept"}
 {"q": "OrderEventHandler onEvent", "expect": ["OrderEventHandler.java"], "kind": "identifier"}
 {"q": "How does the k6 load test check that nothing was oversold?", "expect": ["flash-sale.js"], "kind": "concept"}
+{"q": "IN_PROGRESS_LEASE", "expect": ["IdempotencyStore.java"], "kind": "identifier"}
+{"q": "Where is previousResult defined?", "expect": ["CheckoutService.java"], "kind": "identifier"}
+{"q": "ConfirmTimeoutException", "expect": ["OrderQueuePublisher.java"], "kind": "identifier"}
+{"q": "DEAD_LETTER_QUEUE constant", "expect": ["Messaging.java"], "kind": "identifier"}
+{"q": "what does announceDuplicate do", "expect": ["OrderProcessor.java"], "kind": "identifier"}
+{"q": "recordLatency implementation", "expect": ["LatencyTracker.java"], "kind": "identifier"}
+{"q": "logTrade", "expect": ["TradeLogger.java"], "kind": "identifier"}
+{"q": "where is maxPriceTicks checked", "expect": ["RiskValidator.java"], "kind": "identifier"}

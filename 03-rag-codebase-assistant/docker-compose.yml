@@ -1,25 +1,18 @@
 name: rag-assistant
 
 services:
-  rag:
-    build: .
-    ports:
-      - "8000:8000"
+  postgres:
+    image: pgvector/pgvector:pg16
     environment:
-      INGEST_ROOT: /repo
-      # the internship projects; add 03-rag-codebase-assistant to index this project too
-      INGEST_ON_START: ${INGEST_ON_START:-01-HFT-matching-engine,02-distributed-order-inventory-system}
-      REDIS_URL: redis://redis:6379/0
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
-      CLAUDE_MODEL: ${CLAUDE_MODEL:-claude-opus-5-5}
-      OLLAMA_URL: ${OLLAMA_URL:-}
-      ADMIN_TOKEN: ${ADMIN_TOKEN:-change-me}
-      RATE_LIMIT_PER_MINUTE: ${RATE_LIMIT_PER_MINUTE:-30}
+      POSTGRES_DB: rag
+      POSTGRES_USER: rag
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-rag}
     volumes:
-      - ${REPO_PATH:-..}:/repo:ro      # what gets indexed (read-only)
-      - rag-data:/app/data              # vector index survives restarts
-    depends_on:
-      redis: { condition: service_healthy }
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rag -d rag"]
+      interval: 5s
+      retries: 10
 
   redis:
     image: redis:7-alpine
@@ -29,5 +22,28 @@ services:
       interval: 5s
       retries: 10
 
+  rag:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/rag
+      DB_USER: rag
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-rag}
+      REDIS_URL: redis://redis:6379
+      INGEST_ROOT: /repo
+      # the other internship projects; add 03-rag-codebase-assistant to index this one too
+      INGEST_ON_START: ${INGEST_ON_START:-01-HFT-matching-engine,02-distributed-order-inventory-system}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      CLAUDE_MODEL: ${CLAUDE_MODEL:-claude-opus-5-5}
+      OLLAMA_URL: ${OLLAMA_URL:-}
+      ADMIN_TOKEN: ${ADMIN_TOKEN:-change-me}
+      RATE_LIMIT_PER_MINUTE: ${RATE_LIMIT_PER_MINUTE:-30}
+    volumes:
+      - ${REPO_PATH:-..}:/repo:ro    # what gets indexed (read-only)
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+
 volumes:
-  rag-data:
+  pg-data:

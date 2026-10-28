@@ -1,6 +1,2 @@
-.venv
-data
-tests
-eval
-**/__pycache__
-.pytest_cache
+*
+!target/rag-assistant.jar
