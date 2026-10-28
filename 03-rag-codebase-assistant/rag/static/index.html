@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Codebase Assistant</title>
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<header class="topbar">
+    <div class="brand">
+        <span class="logo">◆</span>
+        <div>
+            <h1>Codebase Assistant</h1>
+            <p class="subtitle">Ask questions about the indexed code and docs</p>
+        </div>
+    </div>
+    <span id="index-info" class="pill">loading…</span>
+</header>
+
+<main class="layout">
+    <aside class="filters card">
+        <h2>Search scope</h2>
+        <label class="field">
+            <span>Project</span>
+            <select id="project"><option value="">All projects</option></select>
+        </label>
+        <fieldset class="field">
+            <legend>File types</legend>
+            <div id="languages" class="checks"></div>
+        </fieldset>
+        <label class="field">
+            <span>Retrieval</span>
+            <select id="mode">
+                <option value="hybrid">Hybrid (BM25 + vectors)</option>
+                <option value="vector">Semantic only</option>
+                <option value="keyword">Keyword only</option>
+            </select>
+        </label>
+        <label class="field">
+            <span>Sources per answer: <b id="topk-value">4</b></span>
+            <input id="topk" type="range" min="1" max="12" value="4">
+        </label>
+        <p class="muted small" id="generator-info"></p>
+    </aside>
+
+    <section class="chat card">
+        <div id="messages" class="messages">
+            <div class="empty" id="empty">
+                <p>Try one of these:</p>
+                <button class="suggestion">How does checkout prevent overselling?</button>
+                <button class="suggestion">Where is reserveAndEnqueue defined?</button>
+                <button class="suggestion">How does the matching engine match buy and sell orders?</button>
+            </div>
+        </div>
+        <form id="ask-form" class="ask">
+            <textarea id="question" rows="2" placeholder="Ask about the code… (Enter to send, Shift+Enter for a new line)" maxlength="2000" required></textarea>
+            <button class="btn" id="send" type="submit">Ask</button>
+        </form>
+    </section>
+</main>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

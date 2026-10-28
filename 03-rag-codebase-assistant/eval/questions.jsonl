@@ -1,0 +1,22 @@
+{"q": "How does checkout make sure stock is never oversold under concurrent requests?", "expect": ["StockReservationService.java", "reserve_stock.lua"], "kind": "concept"}
+{"q": "Where is reserveAndEnqueue defined?", "expect": ["CheckoutService.java"], "kind": "identifier"}
+{"q": "What does the Lua script return when a product has no stock key?", "expect": ["reserve_stock.lua"], "kind": "concept"}
+{"q": "How are retried requests with the same Idempotency-Key handled?", "expect": ["IdempotencyStore.java", "CheckoutService.java"], "kind": "concept"}
+{"q": "What happens when the RabbitMQ publisher confirm times out?", "expect": ["OrderQueuePublisher.java", "CheckoutService.java"], "kind": "concept"}
+{"q": "Which class consumes order-queue and commits orders to Postgres?", "expect": ["OrderProcessor.java", "OrderPersistenceService.java"], "kind": "concept"}
+{"q": "How does the worker avoid deadlocks when decrementing inventory for multi-item orders?", "expect": ["OrderPersistenceService.java"], "kind": "concept"}
+{"q": "decrementStock SQL with quantity >= check", "expect": ["OrderJdbcRepository.java"], "kind": "identifier"}
+{"q": "How are live order status updates pushed to the browser?", "expect": ["LiveEventRelay.java", "WebSocketConfig.java", "app.js"], "kind": "concept"}
+{"q": "What is the rate limit on the auth endpoints at the gateway?", "expect": ["api-gateway/src/main/resources/application.yml", "RateLimitConfig.java"], "kind": "concept"}
+{"q": "How is the catalog served when the database is down?", "expect": ["CatalogService.java"], "kind": "concept"}
+{"q": "listProductsFromCache", "expect": ["CatalogService.java"], "kind": "identifier"}
+{"q": "Why were virtual threads disabled in the order service?", "expect": ["order-service/src/main/resources/application.yml", "02-distributed-order-inventory-system/README.md"], "kind": "concept"}
+{"q": "What check constraint protects the inventory table?", "expect": ["V1__init_schema.sql"], "kind": "concept"}
+{"q": "How does the matching engine match a buy order against resting sell orders?", "expect": ["MatchingEngine.java"], "kind": "concept"}
+{"q": "PriceLevel reset method", "expect": ["PriceLevel.java"], "kind": "identifier"}
+{"q": "What pre-trade risk checks are applied to an order?", "expect": ["RiskValidator.java"], "kind": "concept"}
+{"q": "How is order latency measured and reported?", "expect": ["LatencyTracker.java"], "kind": "concept"}
+{"q": "Where are executed trades written to a CSV file?", "expect": ["TradeLogger.java"], "kind": "concept"}
+{"q": "How does the TCP order server parse incoming orders?", "expect": ["OrderServer.java"], "kind": "concept"}
+{"q": "OrderEventHandler onEvent", "expect": ["OrderEventHandler.java"], "kind": "identifier"}
+{"q": "How does the k6 load test check that nothing was oversold?", "expect": ["flash-sale.js"], "kind": "concept"}
