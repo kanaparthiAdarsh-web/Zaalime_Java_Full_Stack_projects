@@ -1,0 +1,49 @@
+server:
+  port: ${PORT:8000}
+  shutdown: graceful
+
+spring:
+  application:
+    name: rag-assistant
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/rag}
+    username: ${DB_USER:rag}
+    password: ${DB_PASSWORD:rag}
+  flyway:
+    enabled: true
+  # Platform threads on purpose: embedding runs in native ONNX code and the HTTP clients lock
+  # internally, both of which pin virtual threads on Java 21 (see the order service in project 2).
+  threads:
+    virtual:
+      enabled: false
+  jackson:
+    default-property-inclusion: always
+
+rag:
+  ingest-root: ${INGEST_ROOT:..}
+  ingest-on-start: ${INGEST_ON_START:}
+  chunk-size: ${CHUNK_SIZE:1500}
+  chunk-overlap: ${CHUNK_OVERLAP:200}
+  default-top-k: ${DEFAULT_TOP_K:4}
+  candidate-pool: ${CANDIDATE_POOL:20}
+  rate-limit-per-minute: ${RATE_LIMIT_PER_MINUTE:30}
+  admin-token: ${ADMIN_TOKEN:}
+  llm:
+    provider: ${LLM_PROVIDER:auto}
+    anthropic-api-key: ${ANTHROPIC_API_KEY:}
+    claude-model: ${CLAUDE_MODEL:claude-opus-5-5}
+    claude-effort: ${CLAUDE_EFFORT:medium}
+    ollama-url: ${OLLAMA_URL:}
+    ollama-model: ${OLLAMA_MODEL:llama3.1}
+  cache:
+    redis-url: ${REDIS_URL:}
+    ttl: ${CACHE_TTL:1h}
+
+management:
+  health:
+    redis:
+      enabled: false   # Redis is only an optional cache here; it must not mark the app as down
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
